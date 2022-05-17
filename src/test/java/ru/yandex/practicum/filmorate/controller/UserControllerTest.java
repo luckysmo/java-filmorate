@@ -1,8 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Assert;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -20,6 +18,8 @@ import java.time.Month;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -72,7 +72,7 @@ class UserControllerTest {
                 .birthday(LocalDate.of(1995, Month.DECEMBER, 23))
                 .build();
 
-        Assert.assertThrows(ValidationException.class, () -> service.addUser(user)
+        assertThrows(ValidationException.class, () -> service.addUser(user)
         );
     }
 
@@ -103,7 +103,7 @@ class UserControllerTest {
                 .birthday(LocalDate.of(2023, Month.DECEMBER, 23))
                 .build();
 
-        Assert.assertThrows(ValidationException.class, () -> service.addUser(user));
+        assertThrows(ValidationException.class, () -> service.addUser(user));
     }
 
     @Test
@@ -119,8 +119,6 @@ class UserControllerTest {
         expected.add(user);
         List<User> actual = service.getAllUsers();
 
-        Assertions.assertArrayEquals(expected.toArray(), actual.toArray());
+        assertArrayEquals(expected.toArray(), actual.toArray());
     }
-
-
 }
