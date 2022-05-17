@@ -1,8 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Assert;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -22,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.time.Month.DECEMBER;
+import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -110,7 +110,7 @@ public class FilmControllerTest {
                 .releaseDate(LocalDate.of(1890, Month.MAY, 23))
                 .duration(Duration.ofHours(2))
                 .build();
-        Assert.assertThrows(ValidationException.class, () -> service.addFilm(film));
+        assertThrows(ValidationException.class, () -> service.addFilm(film));
     }
 
     @Test
@@ -127,7 +127,7 @@ public class FilmControllerTest {
         expected.add(film);
         List<Film> actual = service.getAllFilms();
 
-        Assertions.assertArrayEquals(expected.toArray(), actual.toArray());
+        assertArrayEquals(expected.toArray(), actual.toArray());
     }
 
 }
