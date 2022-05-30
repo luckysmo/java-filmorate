@@ -70,7 +70,7 @@ public class FilmService {
         return filmStorage.getAll();
     }
 
-    public void putLike(int userId, int filmId) {
+    public void putLike(int filmId, int userId) {
         Set<Integer> filmLikes = checkLikeFilm(filmId);
         filmLikes.add(userId);
         filmStorage.getFilm(filmId).setLikes(filmLikes);
