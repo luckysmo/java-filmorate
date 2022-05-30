@@ -7,6 +7,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.Set;
 
 @Builder
 @Data
@@ -18,5 +19,7 @@ public class Film {
     @NotEmpty
     String description;
     LocalDate releaseDate;
-    Duration duration;
+    long duration;
+    Set<Integer> likes;
+    int rate;
 }
