@@ -5,8 +5,9 @@ import lombok.Data;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
-import java.time.Duration;
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Builder
@@ -22,4 +23,8 @@ public class Film {
     long duration;
     Set<Integer> likes;
     int rate;
+
+    public Set<Integer> getLikes() {
+        return Objects.requireNonNullElseGet(likes, HashSet::new);
+    }
 }

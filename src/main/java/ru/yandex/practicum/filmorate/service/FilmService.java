@@ -12,10 +12,11 @@ import ru.yandex.practicum.filmorate.storage.UserStorage;
 import javax.validation.Valid;
 import java.time.LocalDate;
 import java.time.Month;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -120,12 +121,12 @@ public class FilmService {
     }
 
     public List<Film> getPopular(Integer count) {
-        List<Film> result = new ArrayList<>();
-        for (int i = 0; i <= count; i++) {
-            if (filmStorage.isFilmExist(i)) {
-                result.add(filmStorage.getFilm(i));
-            }
-        }
+        List<Film> result = filmStorage.getAll().stream()
+                .filter(film -> film.getLikes() != null)
+                .sorted(Comparator.comparing(film -> film.getLikes().size(), Comparator.reverseOrder()))
+                .limit(count)
+                .collect(Collectors.toList());
+        log.info("Список популярных фильмов {}", result);
         return result;
     }
 
