@@ -11,11 +11,11 @@ import java.util.Map;
 
 @Slf4j
 @Repository
-public class InMemoryUserStorage implements UserStorage{
-    private static int idCounter = 0;
-    private final Map<Integer, User> users = new HashMap<>();
+public class InMemoryUserStorage implements UserStorage {
+    private static long idCounter = 0;
+    private final Map<Long, User> users = new HashMap<>();
 
-    public boolean isUserExist(int id) {
+    public boolean isUserExist(long id) {
         return users.containsKey(id);
     }
 
@@ -32,11 +32,11 @@ public class InMemoryUserStorage implements UserStorage{
     }
 
     public void update(User user) {
-        users.replace(user.getId(), user);
         log.info("Пользователь  c id {} обновлен.", user.getId());
+        users.replace(user.getId(), user);
     }
 
-    public User getUser(int id){
+    public User getUser(long id) {
         return users.get(id);
     }
 

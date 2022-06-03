@@ -15,8 +15,8 @@ public interface UserStorage {
     List<User> getAll();
 
     //проверяет наличие пользователя
-    boolean isUserExist(int id);
+    boolean isUserExist(long id);
 
     //возвращает пользователя
-    User getUser(int id);
+    User getUser(long id);
 }

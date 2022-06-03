@@ -15,6 +15,7 @@ import java.time.Month;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,28 +27,18 @@ public class FilmService {
     @Autowired
     private FilmStorage filmStorage;
 
-    public Film addFilm(@Valid Film film) throws ValidationException {
-        if (!filmStorage.isFilmExist(film.getId())) {
-            validationCheck(film);
-            return filmStorage.save(film);
-        } else {
-            log.error("Фильм с ID {} уже зарегестрирован!!!", film.getId());
-            throw new ValidationException("Фильм с таким ID уже зарегестрирован!!!");
-        }
+    public Optional<Film> addFilm(@Valid Film film) throws ValidationException {
+        validationCheck(film);
+        return Optional.ofNullable(Optional.ofNullable(filmStorage.save(film))
+                .orElseThrow(() -> new ValidationException("Фильм с таким ID уже зарегестрирован!!!")));
     }
 
-    public Film patchFilm(@Valid Film film) throws ValidationException {
-        try {
+    public Optional<Film> patchFilm(@Valid Film film) throws ValidationException {
+        if (filmStorage.isFilmExist(film.getId())) {
+            return Optional.ofNullable(filmStorage.update(film));
+        } else {
             validationCheck(film);
-            int id = film.getId();
-            if (filmStorage.isFilmExist(id)) {
-                return filmStorage.update(film);
-            } else {
-                return filmStorage.save(film);
-            }
-        } catch (ValidationException exception) {
-            log.error("Ошибка валидации обновления фильма!!!");
-            throw new ValidationException("Ошибка валидации обновления фильма!!!");
+            return Optional.ofNullable(filmStorage.save(film));
         }
     }
 
@@ -71,12 +62,12 @@ public class FilmService {
         return filmStorage.getAll();
     }
 
-    public void putLike(int filmId, int userId) {
-        Set<Integer> filmLikes = checkLikeFilm(filmId);
+    public void putLike(long filmId, long userId) {
+        Set<Long> filmLikes = checkLikeFilm(filmId);
         filmLikes.add(userId);
         filmStorage.getFilm(filmId).setLikes(filmLikes);
 
-        Set<Integer> userLikes = checkLikeUser(userId);
+        Set<Long> userLikes = checkLikeUser(userId);
         userLikes.add(filmId);
         userStorage.getUser(userId).setLikes(userLikes);
         log.info("Пользователь {} поставил лайк фильму {}",
@@ -84,8 +75,8 @@ public class FilmService {
                 filmStorage.getFilm(filmId));
     }
 
-    private Set<Integer> checkLikeFilm(int id) {
-        Set<Integer> likesIds;
+    private Set<Long> checkLikeFilm(long id) {
+        Set<Long> likesIds;
         if (filmStorage.getFilm(id).getLikes() != null) {
             likesIds = filmStorage.getFilm(id).getLikes();
         } else {
@@ -94,8 +85,8 @@ public class FilmService {
         return likesIds;
     }
 
-    private Set<Integer> checkLikeUser(int id) {
-        Set<Integer> likesIds;
+    private Set<Long> checkLikeUser(long id) {
+        Set<Long> likesIds;
         if (userStorage.getUser(id).getLikes() != null) {
             likesIds = userStorage.getUser(id).getLikes();
         } else {
@@ -104,7 +95,7 @@ public class FilmService {
         return likesIds;
     }
 
-    public void deleteLike(int filmId, int userId) {
+    public void deleteLike(long filmId, long userId) {
         if (userId < 0 || filmId < 0) {
             throw new NotFoundException("ID не может быть отрицательным");
         } else {
@@ -130,7 +121,7 @@ public class FilmService {
         return result;
     }
 
-    public Film getFilm(int id) {
+    public Film getFilm(long id) {
         if (id >= 0) {
             return filmStorage.getFilm(id);
         } else {

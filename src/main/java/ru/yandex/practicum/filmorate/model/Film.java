@@ -13,18 +13,18 @@ import java.util.Set;
 @Builder
 @Data
 public class Film {
-    int id;
+    private LocalDate releaseDate;
+    private long duration;
+    private Set<Long> likes;
+    private int rate;
+    private long id;
     @NotEmpty
-    String name;
+    private String name;
     @Size(max = 200)
     @NotEmpty
-    String description;
-    LocalDate releaseDate;
-    long duration;
-    Set<Integer> likes;
-    int rate;
+    private String description;
 
-    public Set<Integer> getLikes() {
+    public Set<Long> getLikes() {
         return Objects.requireNonNullElseGet(likes, HashSet::new);
     }
 }

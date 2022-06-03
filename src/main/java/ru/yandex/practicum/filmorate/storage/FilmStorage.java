@@ -15,8 +15,8 @@ public interface FilmStorage {
     List<Film> getAll();
 
     //проверяет наличие фильма
-    boolean isFilmExist(int id);
+    boolean isFilmExist(long id);
 
     //возвращает фильм
-    Film getFilm(int id);
+    Film getFilm(long id);
 }

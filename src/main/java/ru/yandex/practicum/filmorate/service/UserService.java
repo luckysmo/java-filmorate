@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -14,6 +13,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Slf4j
@@ -22,33 +22,22 @@ public class UserService {
     @Autowired
     private UserStorage userStorage;
 
-    public User getUserById(int id) {
+    public User getUserById(long id) {
         return userStorage.getUser(id);
     }
 
-    public User addUser(@Valid User user) throws ValidationException {
-        if (!userStorage.isUserExist(user.getId())) {
-            validationCheck(user);
-            return userStorage.save(user);
-        } else {
-            log.error("Пользователь с ID {} уже зарегестрирован!!!", user.getId());
-            throw new ValidationException("Пользователь с таким ID уже зарегестрирован!!!");
-        }
+    public Optional<User> addUser(@Valid User user) throws ValidationException {
+        validationCheck(user);
+        return Optional.ofNullable(Optional.ofNullable(userStorage.save(user))
+                .orElseThrow(() -> new ValidationException("Пользователь с таким ID уже зарегестрирован!!!")));
     }
 
     public void patchUser(@Valid User user) throws ValidationException {
-        try {
+        if (userStorage.isUserExist(user.getId())) {
+            userStorage.update(user);
+        } else {
             validationCheck(user);
-            int id = user.getId();
-            if (userStorage.isUserExist(id)) {
-                userStorage.update(user);
-            } else {
-                log.error("Нет такого пользователя {}!", user);
-                throw new NotFoundException("Нет такого пользователя!");
-            }
-        } catch (ValidationException exception) {
-            log.error("Ошибка валидации обновления пользователя!!!");
-            throw new ValidationException("Ошибка валидации обновления пользователя!!!");
+            addUser(user);
         }
     }
 
@@ -71,12 +60,12 @@ public class UserService {
         }
     }
 
-    public void addFriend(int id, int friendId) {
-        Set<Integer> ids = checkFriends(id);
+    public void addFriend(long id, long friendId) {
+        Set<Long> ids = checkFriends(id);
         ids.add(friendId);
         userStorage.getUser(id).setFriendsIds(ids);
 
-        Set<Integer> friendIds = checkFriends(friendId);
+        Set<Long> friendIds = checkFriends(friendId);
         friendIds.add(id);
         userStorage.getUser(friendId).setFriendsIds(friendIds);
         log.info("Пользователь {} добавил в друзья пользователя {}",
@@ -84,8 +73,8 @@ public class UserService {
                 userStorage.getUser(friendId));
     }
 
-    private Set<Integer> checkFriends(int id) {
-        Set<Integer> friendIds;
+    private Set<Long> checkFriends(long id) {
+        Set<Long> friendIds;
         if (userStorage.getUser(id).getFriendsIds() != null) {
             friendIds = userStorage.getUser(id).getFriendsIds();
         } else {
@@ -94,7 +83,7 @@ public class UserService {
         return friendIds;
     }
 
-    public void deleteFriend(int id, int friendId) {
+    public void deleteFriend(long id, long friendId) {
         userStorage.getUser(id).getFriendsIds().remove(friendId);
         userStorage.getUser(friendId).getFriendsIds().remove(id);
         log.info("Пользователь {} удалил из друзей пользователя {}",
@@ -102,11 +91,11 @@ public class UserService {
                 userStorage.getUser(friendId));
     }
 
-    public List<User> getAllFriends(int id) {
+    public List<User> getAllFriends(long id) {
         User user = userStorage.getUser(id);
         List<User> friends = new ArrayList<>();
         if (user.getFriendsIds() != null) {
-            for (Integer friendId : user.getFriendsIds()) {
+            for (Long friendId : user.getFriendsIds()) {
                 friends.add(userStorage.getUser(friendId));
             }
             log.info("Пользователь {} запросил список всех своих друзей", userStorage.getUser(id));
@@ -117,7 +106,7 @@ public class UserService {
         }
     }
 
-    public List<User> getCommonFriend(int id, int otherId) {
+    public List<User> getCommonFriend(long id, long otherId) {
         List<User> commonFriends = new ArrayList<>(getAllFriends(id));
         commonFriends.retainAll(getAllFriends(otherId));
         log.info("Пользователь {} запросил список общих друзей с пользователем {}",
