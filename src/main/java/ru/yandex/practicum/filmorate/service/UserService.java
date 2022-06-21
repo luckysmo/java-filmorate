@@ -6,45 +6,43 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.repository.UserRepo;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import javax.validation.Valid;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Slf4j
 @Service
 public class UserService {
     @Autowired
-    private UserRepo userRepo;
+    private UserStorage userStorage;
 
-    public User addUser(@Valid User user) throws ValidationException {
-        if (!userRepo.isUserExist(user.getId())) {
-            validationCheck(user);
-            return userRepo.save(user);
-        } else {
-            log.error("Пользователь с ID {} уже зарегестрирован!!!", user.getId());
-            throw new ValidationException("Пользователь с таким ID уже зарегестрирован!!!");
-        }
+    public User getUserById(long id) {
+        return userStorage.getUser(id);
     }
 
-    public void patchUSer(@Valid User user) throws ValidationException {
-        try {
+    public Optional<User> addUser(@Valid User user) throws ValidationException {
+        validationCheck(user);
+        return Optional.ofNullable(Optional.ofNullable(userStorage.save(user))
+                .orElseThrow(() -> new ValidationException("Пользователь с таким ID уже зарегестрирован!!!")));
+    }
+
+    public void patchUser(@Valid User user) throws ValidationException {
+        if (userStorage.isUserExist(user.getId())) {
+            userStorage.update(user);
+        } else {
             validationCheck(user);
-            int id = user.getId();
-            if (userRepo.isUserExist(id)) {
-                userRepo.update(user);
-            } else {
-                userRepo.save(user);
-            }
-        } catch (ValidationException exception) {
-            log.error("Ошибка валидации обновления фильма!!!");
-            throw new ValidationException("Ошибка валидации обновления фильма!!!");
+            addUser(user);
         }
     }
 
     public List<User> getAllUsers() {
-        return userRepo.getAll();
+        return userStorage.getAll();
     }
 
     private void validationCheck(@Valid User user) throws ValidationException {
@@ -60,5 +58,60 @@ public class UserService {
             log.error("В логине не может быть пробелов!!!");
             throw new ValidationException("В логине не может быть пробелов!!!");
         }
+    }
+
+    public void addFriend(long id, long friendId) {
+        Set<Long> ids = checkFriends(id);
+        ids.add(friendId);
+        userStorage.getUser(id).setFriendsIds(ids);
+
+        Set<Long> friendIds = checkFriends(friendId);
+        friendIds.add(id);
+        userStorage.getUser(friendId).setFriendsIds(friendIds);
+        log.info("Пользователь {} добавил в друзья пользователя {}",
+                userStorage.getUser(id),
+                userStorage.getUser(friendId));
+    }
+
+    private Set<Long> checkFriends(long id) {
+        Set<Long> friendIds;
+        if (userStorage.getUser(id).getFriendsIds() != null) {
+            friendIds = userStorage.getUser(id).getFriendsIds();
+        } else {
+            friendIds = new HashSet<>();
+        }
+        return friendIds;
+    }
+
+    public void deleteFriend(long id, long friendId) {
+        userStorage.getUser(id).getFriendsIds().remove(friendId);
+        userStorage.getUser(friendId).getFriendsIds().remove(id);
+        log.info("Пользователь {} удалил из друзей пользователя {}",
+                userStorage.getUser(id),
+                userStorage.getUser(friendId));
+    }
+
+    public List<User> getAllFriends(long id) {
+        User user = userStorage.getUser(id);
+        List<User> friends = new ArrayList<>();
+        if (user.getFriendsIds() != null) {
+            for (Long friendId : user.getFriendsIds()) {
+                friends.add(userStorage.getUser(friendId));
+            }
+            log.info("Пользователь {} запросил список всех своих друзей", userStorage.getUser(id));
+            return friends;
+        } else {
+            log.info("Список друзей пользователя {} пуст!", userStorage.getUser(id));
+            return new ArrayList<>();
+        }
+    }
+
+    public List<User> getCommonFriend(long id, long otherId) {
+        List<User> commonFriends = new ArrayList<>(getAllFriends(id));
+        commonFriends.retainAll(getAllFriends(otherId));
+        log.info("Пользователь {} запросил список общих друзей с пользователем {}",
+                userStorage.getUser(id),
+                userStorage.getUser(otherId));
+        return commonFriends;
     }
 }

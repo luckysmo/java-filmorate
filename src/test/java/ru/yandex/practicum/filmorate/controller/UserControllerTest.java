@@ -20,6 +20,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -60,7 +61,7 @@ class UserControllerTest {
                 .content(mapper.writeValueAsString(user));
 
         mockMvc.perform(requestBuilder)
-                .andExpect(status().is(400));
+                .andExpect(status().is(500));
     }
 
     @Test
@@ -91,7 +92,7 @@ class UserControllerTest {
                 .content(mapper.writeValueAsString(user));
 
         mockMvc.perform(requestBuilder)
-                .andExpect(status().is(400));
+                .andExpect(status().is(500));
     }
 
     @Test
@@ -108,17 +109,75 @@ class UserControllerTest {
 
     @Test
     void shouldGetAllUsers() {
-        User user = User.builder()
-                .id(1)
+        List<User> actual = service.getAllUsers();
+
+        assertEquals(4, actual.size());
+    }
+
+    @Test
+    void addFriendTest() {
+        User user1 = User.builder()
                 .login("test")
                 .name("test")
                 .email("XXX@yandex.ru")
                 .birthday(LocalDate.of(1995, Month.DECEMBER, 23))
                 .build();
-        List<User> expected = new ArrayList<>();
-        expected.add(user);
-        List<User> actual = service.getAllUsers();
+        User user2 = User.builder()
+                .login("test")
+                .name("test")
+                .email("XXX@yandex.ru")
+                .birthday(LocalDate.of(1995, Month.DECEMBER, 23))
+                .build();
 
-        assertArrayEquals(expected.toArray(), actual.toArray());
+        service.addUser(user1);
+        service.addUser(user2);
+        service.addFriend(user1.getId(), user2.getId());
+
+        assertEquals(user1.getFriendsIds().size(), user2.getFriendsIds().size());
+    }
+
+    @Test
+    void deleteFriendTest() {
+        User user1 = User.builder()
+                .login("test")
+                .name("test")
+                .email("XXX@yandex.ru")
+                .birthday(LocalDate.of(1995, Month.DECEMBER, 23))
+                .build();
+        User user2 = User.builder()
+                .login("test")
+                .name("test")
+                .email("XXX@yandex.ru")
+                .birthday(LocalDate.of(1995, Month.DECEMBER, 23))
+                .build();
+
+        service.addUser(user1);
+        service.addUser(user2);
+        service.addFriend(user1.getId(), user2.getId());
+        service.deleteFriend(user1.getId(), user2.getId());
+
+        assertArrayEquals(user1.getFriendsIds().toArray(), new ArrayList<>().toArray());
+    }
+
+    @Test
+    void updateUser() {
+        User user1 = User.builder()
+                .login("test1")
+                .name("test1")
+                .email("XXX@yandex.ru")
+                .birthday(LocalDate.of(1995, Month.DECEMBER, 23))
+                .build();
+        User user2 = User.builder()
+                .id(1)
+                .login("test2")
+                .name("test2")
+                .email("XXX@yandex.ru")
+                .birthday(LocalDate.of(1995, Month.DECEMBER, 23))
+                .build();
+
+        service.addUser(user1);
+        service.patchUser(user2);
+
+        assertEquals("test2" ,service.getUserById(1).getName());
     }
 }

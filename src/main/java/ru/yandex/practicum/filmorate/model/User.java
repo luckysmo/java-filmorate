@@ -6,16 +6,19 @@ import lombok.Data;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
 import java.time.LocalDate;
+import java.util.Set;
 
 @Builder
 @Data
 public class User {
-    int id;
+    private long id;
     @Email
     @NotEmpty
-    String email;
+    private String email;
     @NotEmpty
-    String login;
-    String name;
-    LocalDate birthday;
+    private String login;
+    private String name;
+    private LocalDate birthday;
+    private Set<Long> friendsIds;
+    private Set<Long> likes;
 }

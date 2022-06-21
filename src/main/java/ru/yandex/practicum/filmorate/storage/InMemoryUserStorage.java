@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.repository;
+package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
@@ -11,11 +11,11 @@ import java.util.Map;
 
 @Slf4j
 @Repository
-public class UserRepo {
-    private static int idCounter = 0;
-    private final Map<Integer, User> users = new HashMap<>();
+public class InMemoryUserStorage implements UserStorage {
+    private static long idCounter = 0;
+    private final Map<Long, User> users = new HashMap<>();
 
-    public boolean isUserExist(int id) {
+    public boolean isUserExist(long id) {
         return users.containsKey(id);
     }
 
@@ -27,13 +27,17 @@ public class UserRepo {
     public User save(User user) {
         setId(user);
         users.put(user.getId(), user);
-        log.info("Фильм {} добавлен.", user);
+        log.info("Пользователь {} добавлен.", user);
         return user;
     }
 
     public void update(User user) {
+        log.info("Пользователь  c id {} обновлен.", user.getId());
         users.replace(user.getId(), user);
-        log.info("Фильм  c id {} обновлен.", user.getId());
+    }
+
+    public User getUser(long id) {
+        return users.get(id);
     }
 
     public List<User> getAll() {
